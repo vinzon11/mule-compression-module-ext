@@ -26,7 +26,7 @@
         <munit.extensions.maven.plugin.version>1.0.0-BETA</munit.extensions.maven.plugin.version>
         <munit.version>2.2.0-BETA</munit.version>
         <mavenResourcesVersion>3.0.2</mavenResourcesVersion>
-        <javax.jaxb-api.version>2.3.0</javax.jaxb-api.version>
+        <javax.jaxb-api.version>2.3.1</javax.jaxb-api.version>
     </properties>
 
     <build>
