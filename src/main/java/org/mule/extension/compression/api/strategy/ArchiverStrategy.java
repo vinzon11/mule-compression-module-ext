@@ -21,8 +21,9 @@ import java.util.Map;
 public interface ArchiverStrategy {
 
   /**
-   * Receives a map with all the contents that needs to be compressed, creates a new archive with
-   * those contents and returns the created archive as an InputStream
+   * Receives a map with all the contents that needs to be compressed, creates a new archive with those contents and returns the
+   * created archive as an InputStream
    */
   Result<InputStream, Void> archive(Map<String, TypedValue<InputStream>> entries) throws CompressionException;
+
 }

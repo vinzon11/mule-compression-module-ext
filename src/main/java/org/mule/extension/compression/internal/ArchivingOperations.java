@@ -20,6 +20,7 @@ import org.mule.runtime.extension.api.annotation.dsl.xml.ParameterDsl;
 import org.mule.runtime.extension.api.annotation.error.Throws;
 import org.mule.runtime.extension.api.annotation.param.Content;
 import org.mule.runtime.extension.api.annotation.param.MediaType;
+import org.mule.runtime.extension.api.annotation.param.display.DisplayName;
 import org.mule.runtime.extension.api.annotation.param.display.Summary;
 import org.mule.runtime.extension.api.runtime.operation.Result;
 import org.mule.runtime.extension.api.runtime.streaming.StreamingHelper;
@@ -37,23 +38,17 @@ public class ArchivingOperations {
   /**
    * Compresses all the given entries into a new file in the configured format.
    * <p>
-   * Each entry passed to this operation will be placed inside the compressed archive with the name provided by the user
-   * in the DataWeave script. e.g.
+   * Each entry passed to this operation will be placed inside the compressed archive with the name provided by the user in the
+   * DataWeave script. e.g.
    * <p>
    * For this expression:
    * <p>
-   * {
-   * file: vars.aTxtContent,
-   * 'dir/resume.pdf': vars.pdf
-   * }
+   * { file: vars.aTxtContent, 'dir/resume.pdf': vars.pdf }
    * <p>
    * The resultant archive will contain 2 entries one named "file" at root level and another one called "resume.pdf" inside a
    * directory called "dir".
    * <p>
-   * +- Archive
-   * |  \- file1
-   * |  \+ dir1
-   * |  \- file2
+   * +- Archive | \- file1 | \+ dir1 | \- file2
    * <p>
    * As you can see in the example above, the slash "/" in the name of an entry indicates directory separation, so all names will
    * be introspected to create dirs inside the archive.
@@ -73,11 +68,24 @@ public class ArchivingOperations {
     return archiver.archive(entries);
   }
 
+  // @MediaType(value = ANY, strict = false)
+  // @Summary("Compresses a set of entries into a new file in the specified archive format")
+  // @Throws(ArchiveErrorProvider.class)
+  // public Result<InputStream, Void> securedArchive(@Content Map<String, TypedValue<InputStream>> entries,
+  // @ParameterDsl(
+  // allowReferences = false) @Expression(NOT_SUPPORTED) ArchiverStrategy archiver,
+  // @DisplayName("Password") String password) {
+  // if (entries == null) {
+  // throw new CompressionException("the entries parameter is null");
+  // }
+  // return archiver.securedArchive(entries, password);
+  // }
+
   /**
    * Decompresses a given content that represent an archive in a compression format.
    *
-   * @param compressed      the content of a compressed archive
-   * @param extractor       the extractor strategy
+   * @param compressed the content of a compressed archive
+   * @param extractor the extractor strategy
    * @param streamingHelper a {@link StreamingHelper} to make streams repeatable
    */
   @MediaType(value = ANY, strict = false)

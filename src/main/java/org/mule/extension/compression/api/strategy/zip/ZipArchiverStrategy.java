@@ -6,17 +6,17 @@
  */
 package org.mule.extension.compression.api.strategy.zip;
 
+import java.io.InputStream;
+import java.util.Map;
+
+import javax.inject.Inject;
+
 import org.mule.extension.compression.api.strategy.ArchiverStrategy;
 import org.mule.extension.compression.internal.CompressionManager;
 import org.mule.runtime.api.metadata.TypedValue;
 import org.mule.runtime.extension.api.annotation.Alias;
 import org.mule.runtime.extension.api.annotation.param.display.DisplayName;
 import org.mule.runtime.extension.api.runtime.operation.Result;
-
-import java.io.InputStream;
-import java.util.Map;
-
-import javax.inject.Inject;
 
 /**
  * Zip format archiver
@@ -37,4 +37,5 @@ public class ZipArchiverStrategy implements ArchiverStrategy {
   public Result<InputStream, Void> archive(Map<String, TypedValue<InputStream>> entries) {
     return compressionManager.asyncArchive(entries);
   }
+
 }

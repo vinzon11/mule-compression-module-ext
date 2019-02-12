@@ -10,16 +10,6 @@ import static java.lang.System.getProperty;
 import static org.mule.extension.compression.internal.CompressionExtension.ZIP_MEDIA_TYPE;
 import static org.mule.runtime.api.metadata.DataType.INPUT_STREAM;
 import static org.mule.runtime.core.api.util.FileUtils.copyStreamToFile;
-import org.mule.extension.compression.internal.error.exception.CompressionException;
-import org.mule.extension.compression.internal.zip.TempZipFile;
-import org.mule.runtime.api.exception.MuleException;
-import org.mule.runtime.api.lifecycle.Startable;
-import org.mule.runtime.api.lifecycle.Stoppable;
-import org.mule.runtime.api.metadata.TypedValue;
-import org.mule.runtime.api.scheduler.Scheduler;
-import org.mule.runtime.api.scheduler.SchedulerService;
-import org.mule.runtime.api.transformation.TransformationService;
-import org.mule.runtime.extension.api.runtime.operation.Result;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +24,20 @@ import javax.inject.Inject;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.mule.extension.compression.internal.error.exception.CompressionException;
+import org.mule.extension.compression.internal.zip.TempZipFile;
+import org.mule.runtime.api.exception.MuleException;
+import org.mule.runtime.api.lifecycle.Startable;
+import org.mule.runtime.api.lifecycle.Stoppable;
+import org.mule.runtime.api.metadata.TypedValue;
+import org.mule.runtime.api.scheduler.Scheduler;
+import org.mule.runtime.api.scheduler.SchedulerService;
+import org.mule.runtime.api.transformation.TransformationService;
+import org.mule.runtime.extension.api.runtime.operation.Result;
+
+import net.lingala.zip4j.io.ZipOutputStream;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.util.Zip4jConstants;
 
 /**
  * Manages resources necessary for performing compression operations
@@ -82,6 +86,24 @@ public class CompressionManager implements Startable, Stoppable {
     }
   }
 
+  public Result<InputStream, Void> asyncSecuredArchive(Map<String, TypedValue<InputStream>> entries, String password) {
+    try {
+      PipedInputStream pipe = new PipedInputStream();
+      PipedOutputStream out = new PipedOutputStream(pipe);
+
+      compressionScheduler.submit(() -> securedArchive(entries, out, password));
+
+      return Result.<InputStream, Void>builder()
+          .output(pipe)
+          .mediaType(ZIP_MEDIA_TYPE)
+          .build();
+    } catch (CompressionException e) {
+      throw e;
+    } catch (Throwable t) {
+      throw new CompressionException(t);
+    }
+  }
+
   /**
    * Receives a ZIP content and creates a temporal physical {@link TempZipFile file} for it
    *
@@ -105,12 +127,57 @@ public class CompressionManager implements Startable, Stoppable {
    * Creates an archive of the given entries
    *
    * @param entries the entries to archive
-   * @param out     the {@link OutputStream} in which the compressed content is going to be written
+   * @param out the {@link OutputStream} in which the compressed content is going to be written
    */
   private void archive(Map<String, TypedValue<InputStream>> entries, OutputStream out) {
     try (ZipArchiveOutputStream zip = new ZipArchiveOutputStream(out)) {
       entries.forEach((name, content) -> addEntry(zip, name, content, transformationService));
     } catch (IOException e) {
+      throw new CompressionException(e);
+    }
+  }
+
+
+  private void securedArchive(Map<String, TypedValue<InputStream>> entries, OutputStream out, String password) {
+    ZipOutputStream zipOutputStream = new ZipOutputStream(out);
+
+    ZipParameters parameters = new ZipParameters();
+
+    parameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
+    parameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
+    parameters.setEncryptFiles(true);
+    parameters.setEncryptionMethod(Zip4jConstants.ENC_METHOD_STANDARD);
+
+    parameters.setPassword(password);
+
+    try (ZipOutputStream zip = zipOutputStream) {
+      entries.forEach((name, content) -> addSecuredEntry(zip, name, content, parameters, transformationService));
+    } catch (IOException e) {
+      throw new CompressionException(e);
+    }
+  }
+
+  private void addSecuredEntry(ZipOutputStream zip,
+                               String name,
+                               TypedValue<InputStream> entryContent, ZipParameters zipParameters,
+                               TransformationService transformationService) {
+    try {
+
+      zipParameters.setSourceExternalStream(true);
+      zipParameters.setFileNameInZip(name);
+
+      zip.putNextEntry(null, zipParameters);
+
+      byte[] buffer = new byte[1024];
+      int length;
+      InputStream content = getContent(name, entryContent, transformationService);
+
+      while ((length = content.read(buffer)) >= 0) {
+        zip.write(buffer, 0, length);
+      }
+      zip.closeEntry();
+      zip.finish();
+    } catch (Exception e) {
       throw new CompressionException(e);
     }
   }

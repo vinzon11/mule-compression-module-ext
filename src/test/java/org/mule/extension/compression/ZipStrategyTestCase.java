@@ -7,6 +7,7 @@
 package org.mule.extension.compression;
 
 import static java.lang.Thread.currentThread;
+import static java.util.Collections.singletonMap;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
@@ -20,18 +21,6 @@ import static org.mule.extension.compression.CompressionModuleTestUtils.asTextTy
 import static org.mule.runtime.api.metadata.DataType.INPUT_STREAM;
 import static org.mule.runtime.api.metadata.DataType.TEXT_STRING;
 import static org.mule.runtime.core.api.util.IOUtils.toByteArray;
-import org.mule.extension.compression.api.strategy.zip.ZipArchiverStrategy;
-import org.mule.extension.compression.api.strategy.zip.ZipCompressorStrategy;
-import org.mule.extension.compression.api.strategy.zip.ZipDecompressorStrategy;
-import org.mule.extension.compression.api.strategy.zip.ZipExtractorStrategy;
-import org.mule.extension.compression.internal.error.exception.InvalidArchiveException;
-import org.mule.extension.compression.internal.error.exception.TooManyEntriesException;
-import org.mule.functional.junit4.FunctionalTestCase;
-import org.mule.runtime.api.metadata.TypedValue;
-import org.mule.runtime.core.api.util.IOUtils;
-import org.mule.runtime.extension.api.runtime.operation.Result;
-
-import com.google.common.collect.ImmutableMap;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -41,6 +30,19 @@ import org.hamcrest.collection.IsMapContaining;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mule.extension.compression.api.strategy.zip.ZipArchiverStrategy;
+import org.mule.extension.compression.api.strategy.zip.ZipCompressorStrategy;
+import org.mule.extension.compression.api.strategy.zip.ZipDecompressorStrategy;
+import org.mule.extension.compression.api.strategy.zip.ZipExtractorStrategy;
+import org.mule.extension.compression.api.strategy.zip.ZipSecuredArchiverStrategy;
+import org.mule.extension.compression.internal.error.exception.InvalidArchiveException;
+import org.mule.extension.compression.internal.error.exception.TooManyEntriesException;
+import org.mule.functional.junit4.FunctionalTestCase;
+import org.mule.runtime.api.metadata.TypedValue;
+import org.mule.runtime.core.api.util.IOUtils;
+import org.mule.runtime.extension.api.runtime.operation.Result;
+
+import com.google.common.collect.ImmutableMap;
 
 public class ZipStrategyTestCase extends FunctionalTestCase {
 
@@ -56,6 +58,7 @@ public class ZipStrategyTestCase extends FunctionalTestCase {
   private ZipArchiverStrategy archiver = new ZipArchiverStrategy();
   private ZipDecompressorStrategy decompressor = new ZipDecompressorStrategy();
   private ZipExtractorStrategy extractor = new ZipExtractorStrategy();
+  private ZipSecuredArchiverStrategy securedArchiver = new ZipSecuredArchiverStrategy();
 
   @Override
   protected String[] getConfigFiles() {
@@ -68,6 +71,7 @@ public class ZipStrategyTestCase extends FunctionalTestCase {
     muleContext.getInjector().inject(decompressor);
     muleContext.getInjector().inject(archiver);
     muleContext.getInjector().inject(extractor);
+    muleContext.getInjector().inject(securedArchiver);
   }
 
   @Test
@@ -77,6 +81,16 @@ public class ZipStrategyTestCase extends FunctionalTestCase {
     byte[] gzipBytes = toByteArray(compress.getOutput());
 
     assertThat(gzipBytes.length, lessThan(DATA_SIZE));
+  }
+
+  @Test
+  public void secure() {
+    TypedValue<InputStream> testInput = new TypedValue<>(new ByteArrayInputStream(TEST_DATA.getBytes()), TEXT_STRING);
+
+    Result<InputStream, Void> compress = securedArchiver.archive(singletonMap("data.csv", testInput), "thepassword");
+    byte[] zipBytes = toByteArray(compress.getOutput());
+
+    assertThat(zipBytes.length, lessThan(DATA_SIZE));
   }
 
   @Test

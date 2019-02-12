@@ -11,17 +11,20 @@ import org.mule.runtime.api.metadata.TypedValue;
 import org.mule.runtime.extension.api.runtime.operation.Result;
 
 import java.io.InputStream;
+import java.util.Map;
 
 /**
- * Provides the capability to compress data in some compression format.
+ * Provides the capability to archive a set of entries into a single archive in some compression format.
  *
  * @since 2.0
  */
-public interface CompressorStrategy {
+public interface SecuredArchiverStrategy {
 
   /**
-   * Compresses an incoming data content. Returns a new compressed Stream
+   * Receives a map with all the contents that needs to be compressed, creates a new archive with those contents and password then
+   * returns the created archive as an InputStream
    */
-  Result<InputStream, Void> compress(TypedValue<InputStream> data) throws CompressionException;
 
+  Result<InputStream, Void> archive(Map<String, TypedValue<InputStream>> entries, String password)
+      throws CompressionException;
 }

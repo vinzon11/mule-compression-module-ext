@@ -11,12 +11,14 @@ import org.mule.extension.compression.api.strategy.ArchiverStrategy;
 import org.mule.extension.compression.api.strategy.CompressorStrategy;
 import org.mule.extension.compression.api.strategy.DecompressorStrategy;
 import org.mule.extension.compression.api.strategy.ExtractorStrategy;
+import org.mule.extension.compression.api.strategy.SecuredArchiverStrategy;
 import org.mule.extension.compression.api.strategy.gzip.GzipCompressorStrategy;
 import org.mule.extension.compression.api.strategy.gzip.GzipDecompressorStrategy;
 import org.mule.extension.compression.api.strategy.zip.ZipArchiverStrategy;
 import org.mule.extension.compression.api.strategy.zip.ZipCompressorStrategy;
 import org.mule.extension.compression.api.strategy.zip.ZipDecompressorStrategy;
 import org.mule.extension.compression.api.strategy.zip.ZipExtractorStrategy;
+import org.mule.extension.compression.api.strategy.zip.ZipSecuredArchiverStrategy;
 import org.mule.extension.compression.internal.error.CompressionError;
 import org.mule.runtime.api.metadata.MediaType;
 import org.mule.runtime.extension.api.annotation.Extension;
@@ -33,8 +35,9 @@ import org.mule.runtime.extension.api.annotation.error.ErrorTypes;
 @SubTypeMapping(baseType = DecompressorStrategy.class, subTypes = {GzipDecompressorStrategy.class, ZipDecompressorStrategy.class})
 @SubTypeMapping(baseType = ExtractorStrategy.class, subTypes = {ZipExtractorStrategy.class})
 @SubTypeMapping(baseType = ArchiverStrategy.class, subTypes = {ZipArchiverStrategy.class})
+@SubTypeMapping(baseType = SecuredArchiverStrategy.class, subTypes = {ZipSecuredArchiverStrategy.class})
 @Extension(name = "Compression")
-@Operations({CompressionOperations.class, ArchivingOperations.class})
+@Operations({CompressionOperations.class, ArchivingOperations.class, SecuredArchivingOperations.class})
 @ErrorTypes(CompressionError.class)
 public class CompressionExtension {
 

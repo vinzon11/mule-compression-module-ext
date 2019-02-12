@@ -6,27 +6,26 @@
  */
 package org.mule.extension.compression.api.strategy.zip;
 
-import static java.util.Collections.singletonMap;
-import org.mule.extension.compression.api.strategy.CompressorStrategy;
+import java.io.InputStream;
+import java.util.Map;
+
+import javax.inject.Inject;
+
+import org.mule.extension.compression.api.strategy.SecuredArchiverStrategy;
 import org.mule.extension.compression.internal.CompressionManager;
-import org.mule.extension.compression.internal.error.exception.CompressionException;
 import org.mule.runtime.api.metadata.TypedValue;
 import org.mule.runtime.extension.api.annotation.Alias;
 import org.mule.runtime.extension.api.annotation.param.display.DisplayName;
 import org.mule.runtime.extension.api.runtime.operation.Result;
 
-import java.io.InputStream;
-
-import javax.inject.Inject;
-
 /**
- * A Zip compressor.
+ * Zip format archiver
  *
  * @since 2.0
  */
 @DisplayName("Zip")
-@Alias("zip-compressor")
-public class ZipCompressorStrategy implements CompressorStrategy {
+@Alias("zip-secured-archiver")
+public class ZipSecuredArchiverStrategy implements SecuredArchiverStrategy {
 
   @Inject
   private CompressionManager compressionManager;
@@ -35,7 +34,7 @@ public class ZipCompressorStrategy implements CompressorStrategy {
    * {@inheritDoc}
    */
   @Override
-  public Result<InputStream, Void> compress(TypedValue<InputStream> data) throws CompressionException {
-    return compressionManager.asyncArchive(singletonMap("data", data));
+  public Result<InputStream, Void> archive(Map<String, TypedValue<InputStream>> entries, String password) {
+    return compressionManager.asyncSecuredArchive(entries, password);
   }
 }
